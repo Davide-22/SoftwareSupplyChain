@@ -1,0 +1,5 @@
+.env
+abi.json
+struct.sol
+**/__pycache__/
+.vscode
