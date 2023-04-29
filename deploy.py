@@ -52,11 +52,33 @@ def deploy_contract(name: str, path: str, *params):
 
 
 """Deploy the SupplyChainToken contract"""
-abi, address = deploy_contract("SupplyChainToken", "/ERC20", initial_tokens)
+token_abi, token_address = deploy_contract("SupplyChainToken", "/ERC20", initial_tokens)
+print(f"SupplyChainToken contract address: {token_address}")
 
 """Deploy the SoftwareSupplyChain contract"""
-abi, address = deploy_contract("SoftwareSupplyChain", "", address)
+abi, address = deploy_contract("SoftwareSupplyChain", "", token_address)
+print(f"SoftwareSupplyChain contract address: {address}")
 
 with open("abi.json", "w") as file:
     json.dump(abi, file)
-print(address)
+
+"""Transfer tokens from the deployer to the SoftwareSupplyChain contract"""
+nonce: int = w3.eth.getTransactionCount(addr)
+contract = w3.eth.contract(address=token_address, abi=token_abi)
+transaction = contract.functions.transfer(address, initial_tokens).buildTransaction(
+    {
+        "chainId": chain_id,
+        "from": addr,
+        "gasPrice": w3.eth.gas_price,
+        "nonce": nonce
+    }
+)
+signed_transaction = w3.eth.account.sign_transaction(
+    transaction, private_key=private_key
+)
+transaction_hash = w3.eth.send_raw_transaction(
+    signed_transaction.rawTransaction
+)
+tx_receipt = w3.eth.wait_for_transaction_receipt(transaction_hash)
+
+

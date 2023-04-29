@@ -12,6 +12,7 @@ contract SoftwareSupplyChain {
         uint256 registration_date;
         uint256 last_update;
         uint256 report_num;
+        uint256 interaction_points;
         string[] groups;
         mapping(string => uint256) groups_map;
         string[] groups_adm;
@@ -70,6 +71,8 @@ contract SoftwareSupplyChain {
         uint256 mean
     );
 
+    event Bought(uint256 amount);
+
     SupplyChainToken private sctContract;
 
     constructor(address sctAddress) {
@@ -87,7 +90,7 @@ contract SoftwareSupplyChain {
         );
         require(bytes(_email).length != 0, "Insert a valid email");
         /*require(
-            sstContract.balanceOf(msg.sender) >= 20,
+            sctContract.balanceOf(msg.sender) >= 20,
             "You need 20 SCT to register as a developer"
         );*/
         Developer storage dev = developers[msg.sender];
@@ -98,8 +101,7 @@ contract SoftwareSupplyChain {
         dev.registration_date = block.timestamp;
         dev.last_update = block.timestamp;
         devs_num++;
-        //sctContract.approve(sctContract.contract_owner(), 20);
-        //sctContract.transferFrom(msg.sender, sctContract.contract_owner(), 20);
+        //sctContract.transfer(address(this), 20);
     }
 
     function createGroup(string memory group_name) public {
@@ -349,12 +351,25 @@ contract SoftwareSupplyChain {
             "The new admin must be a registered developer"
         );
         dev_groups[group_name].admin = new_admin;
+        for (
+            uint256 i = 0;
+            i < dev_groups[group_name].group_projects.length;
+            i++
+        ) {
+            projects[dev_groups[group_name].group_projects[i]]
+                .admin = new_admin;
+        }
     }
 
     function buyTokens() public payable {
         uint256 tokens = msg.value * 1;
-        require(sctContract.balanceOf(sctContract.contract_owner()) >= tokens);
+        require(tokens > 0, "You need to send some ether");
+        require(
+            tokens <= sctContract.balanceOf(address(this)),
+            "Not enough tokens in the reserve"
+        );
         sctContract.transfer(msg.sender, tokens);
+        emit Bought(tokens);
     }
 
     function balanceOf(address tokenOwner) public view returns (uint256) {
@@ -436,6 +451,23 @@ contract SoftwareSupplyChain {
         uint256 rel_diff = rel - libraries[CID].reliability;
         libraries[CID].reliability = rel;
         total_libraries_reliability += rel_diff;
+        for (
+            uint256 i = 0;
+            i <
+            dev_groups[projects[libraries[CID].project].group]
+                .group_developers
+                .length;
+            i++
+        ) {
+            Developer storage curr_dev = developers[
+                dev_groups[projects[libraries[CID].project].group]
+                    .group_developers[i]
+            ];
+            curr_dev.interaction_points++;
+            if (curr_dev.interaction_points % 1000 == 0) {
+                curr_dev.reliability++;
+            }
+        }
         string memory level;
         uint256 reliability_mean = total_libraries_reliability / libraries_num;
         if (rel <= (reliability_mean * 1) / 3) {

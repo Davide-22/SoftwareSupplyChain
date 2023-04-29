@@ -38,7 +38,6 @@ contract SupplyChainToken is IERC20 {
     string public constant name = "SupplyChainToken";
     string public constant symbol = "SCT";
     uint8 public constant decimals = 18;
-    address public contract_owner = msg.sender;
 
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
@@ -48,7 +47,6 @@ contract SupplyChainToken is IERC20 {
     constructor(uint256 total) {
         totalSupply_ = total;
         balances[msg.sender] = totalSupply_;
-        contract_owner = msg.sender;
     }
 
     function totalSupply() public view override returns (uint256) {

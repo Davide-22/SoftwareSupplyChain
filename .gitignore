@@ -1,5 +1,5 @@
 .env
 abi.json
-struct.sol
+token_abi.json
 **/__pycache__/
 .vscode

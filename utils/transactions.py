@@ -5,7 +5,7 @@ from utils.check_dependencies import getDependencies
 
 class Transactions:
     def __init__(
-        self, w3: Web3, chain_id: int, addr: str, private_key: str, contract, ipfs: IPFS
+        self, w3: Web3, chain_id: int, addr: str, private_key: str, contract, ipfs: IPFS 
     ):
         self.w3 = w3
         self.chain_id = chain_id
@@ -186,6 +186,7 @@ class Transactions:
             )
             print(f"{tokens} tokens have been bought\n")
         except exceptions.SolidityError as error:
+            print(error)
             print(str(error)[70:], end="\n")
 
     def createTransaction(self, fun, *parameters, value=0):
