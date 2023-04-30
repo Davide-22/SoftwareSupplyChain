@@ -49,11 +49,12 @@ contract SoftwareSupplyChain {
         string[] dependencies;
     }
 
-    address public contract_owner = msg.sender;
+    address public contract_owner;
     uint256 public devs_num;
     uint256 public groups_num;
     uint256 public projects_num;
     uint256 public libraries_num;
+    uint256 public fees_paid;
     uint256 private total_developers_reliability;
     uint256 private total_libraries_reliability;
     mapping(address => Developer) private developers;
@@ -77,6 +78,7 @@ contract SoftwareSupplyChain {
 
     constructor(address sctAddress) {
         sctContract = SupplyChainToken(sctAddress);
+        contract_owner = msg.sender;
     }
 
     function addDeveloper(string memory _email) public {
@@ -89,10 +91,10 @@ contract SoftwareSupplyChain {
             "A developer with the same email aready exists"
         );
         require(bytes(_email).length != 0, "Insert a valid email");
-        /*require(
+        require(
             sctContract.balanceOf(msg.sender) >= 20,
-            "You need 20 SCT to register as a developer"
-        );*/
+            "You need 30 SCT to register as a developer"
+        );
         Developer storage dev = developers[msg.sender];
         dev.id = msg.sender;
         dev.email = _email;
@@ -101,7 +103,8 @@ contract SoftwareSupplyChain {
         dev.registration_date = block.timestamp;
         dev.last_update = block.timestamp;
         devs_num++;
-        //sctContract.transfer(address(this), 20);
+        sctContract.transferFrom(msg.sender, address(this), 30);
+        fees_paid += 30;
     }
 
     function createGroup(string memory group_name) public {
@@ -114,6 +117,10 @@ contract SoftwareSupplyChain {
             bytes(dev_groups[group_name].name).length == 0,
             "A group with the same name aready exists"
         );
+        require(
+            sctContract.balanceOf(msg.sender) >= 20,
+            "You need 20 SCT to create a group"
+        );
         DeveloperGroup storage dev_group = dev_groups[group_name];
         developers[msg.sender].groups.push(group_name);
         developers[msg.sender].groups_map[group_name] = block.timestamp;
@@ -123,6 +130,8 @@ contract SoftwareSupplyChain {
         dev_group.admin = msg.sender;
         dev_group.group_developers.push(msg.sender);
         groups_num++;
+        sctContract.transferFrom(msg.sender, address(this), 20);
+        fees_paid += 20;
     }
 
     function createProject(
@@ -145,12 +154,18 @@ contract SoftwareSupplyChain {
             bytes(projects[project_name].name).length == 0,
             "A project with the same name already exists"
         );
+        require(
+            sctContract.balanceOf(msg.sender) >= 20,
+            "You need 20 SCT to create a project"
+        );
         Project storage project = projects[project_name];
         dev_groups[group_name].group_projects.push(project_name);
         project.name = project_name;
         project.group = group_name;
         project.admin = msg.sender;
         projects_num++;
+        sctContract.transferFrom(msg.sender, address(this), 20);
+        fees_paid += 20;
     }
 
     function requestGroupAccess(string memory group_name) public {
@@ -277,6 +292,10 @@ contract SoftwareSupplyChain {
                 bytes(libraries[CID].CID).length != 0),
             "The same version already exists"
         );
+        require(
+            sctContract.balanceOf(msg.sender) >= 20,
+            "You need 10 SCT to add a library version to a project"
+        );
         Library storage lib = libraries[CID];
         lib.CID = CID;
         lib.version = version;
@@ -289,6 +308,8 @@ contract SoftwareSupplyChain {
         projects[project_name].library_versions.push(CID);
         projects[project_name].last_version = CID;
         projects[project_name].library_versions_map[version] = CID;
+        sctContract.transferFrom(msg.sender, address(this), 10);
+        fees_paid += 10;
     }
 
     function voteDeveloper(address developer) public {

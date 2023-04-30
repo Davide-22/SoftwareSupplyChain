@@ -12,11 +12,15 @@ if __name__ == "__main__":
     with open("abi.json", "r") as file:
         abi = file.read()
 
+    with open("token_abi.json", "r") as file:
+        token_abi = file.read()
+
     w3: Web3 = Web3(Web3.HTTPProvider(os.getenv("BLOCKCHAIN_ADDRESS")))
     chain_id: int = 1337
     addr: str = os.getenv("ADDRESS")
     private_key: str = os.getenv("PRIVATE_KEY")
     contract = w3.eth.contract(address=os.getenv("CONTRACT_ADDRESS"), abi=abi)
+    token_contract = w3.eth.contract(address=os.getenv("TOKEN_CONTRACT_ADDRESS"), abi=token_abi)
     ipfs_auth_token: str = os.getenv("IPFS_AUTH_TOKEN")
     ipfs: IPFS = IPFS(contract=contract, ipfs_auth_token=ipfs_auth_token)
     transactions: Transactions = Transactions(
@@ -25,6 +29,7 @@ if __name__ == "__main__":
         addr=addr,
         private_key=private_key,
         contract=contract,
+        token_contract=token_contract,
         ipfs=ipfs,
     )
     while True:

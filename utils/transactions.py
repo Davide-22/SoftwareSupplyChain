@@ -5,19 +5,21 @@ from utils.check_dependencies import getDependencies
 
 class Transactions:
     def __init__(
-        self, w3: Web3, chain_id: int, addr: str, private_key: str, contract, ipfs: IPFS 
+        self, w3: Web3, chain_id: int, addr: str, private_key: str, contract, token_contract, ipfs: IPFS 
     ):
         self.w3 = w3
         self.chain_id = chain_id
         self.addr = addr
         self.private_key = private_key
         self.contract = contract
+        self.token_contract = token_contract
         self.ipfs = ipfs
 
     def addDeveloper(self):
         email: str = input("Insert your email: ")
         print("Registering as a developer...")
         try:
+            self.approveTokenFee(30)
             self.createTransaction(self.contract.functions.addDeveloper, email)
             print(f"Registered as a developer with email {email}\n")
         except exceptions.SolidityError as error:
@@ -27,6 +29,7 @@ class Transactions:
         group_name: str = input("Insert the group name: ")
         print("Creating a group...")
         try:
+            self.approveTokenFee(20)
             self.createTransaction(self.contract.functions.createGroup, group_name)
             print(f"Group {group_name} created\n")
         except exceptions.SolidityError as error:
@@ -39,6 +42,7 @@ class Transactions:
         project_name: str = input("Insert the project name: ")
         print("Creating a project...")
         try:
+            self.approveTokenFee(20)
             self.createTransaction(
                 self.contract.functions.createProject, group_name, project_name
             )
@@ -87,6 +91,7 @@ class Transactions:
 
         CID: str = self.ipfs.uploadFile(file)["cid"]
         try:
+            self.approveTokenFee(10)
             self.createTransaction(
                 self.contract.functions.addLibrary,
                 project_name,
@@ -208,3 +213,8 @@ class Transactions:
         )
         tx_receipt = self.w3.eth.wait_for_transaction_receipt(transaction_hash)
         return tx_receipt
+    
+    def approveTokenFee(self, fee):
+        receipt = self.createTransaction(
+                self.token_contract.functions.approve, self.contract.address, fee
+        )

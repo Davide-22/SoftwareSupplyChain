@@ -55,6 +55,9 @@ def deploy_contract(name: str, path: str, *params):
 token_abi, token_address = deploy_contract("SupplyChainToken", "/ERC20", initial_tokens)
 print(f"SupplyChainToken contract address: {token_address}")
 
+with open("token_abi.json", "w") as file:
+    json.dump(token_abi, file)
+
 """Deploy the SoftwareSupplyChain contract"""
 abi, address = deploy_contract("SoftwareSupplyChain", "", token_address)
 print(f"SoftwareSupplyChain contract address: {address}")
