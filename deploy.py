@@ -16,6 +16,8 @@ chain_id = 1337
 addr = os.getenv("ADDRESS")
 private_key = os.getenv("PRIVATE_KEY")
 initial_tokens = 1000000000
+max_reliability = 20
+reliability_cost = 50
 
 
 def deploy_contract(name: str, path: str, *params):
@@ -59,7 +61,7 @@ with open("token_abi.json", "w") as file:
     json.dump(token_abi, file)
 
 """Deploy the SoftwareSupplyChain contract"""
-abi, address = deploy_contract("SoftwareSupplyChain", "", token_address)
+abi, address = deploy_contract("SoftwareSupplyChain", "", token_address, max_reliability, reliability_cost)
 print(f"SoftwareSupplyChain contract address: {address}")
 
 with open("abi.json", "w") as file:
@@ -83,5 +85,4 @@ transaction_hash = w3.eth.send_raw_transaction(
     signed_transaction.rawTransaction
 )
 tx_receipt = w3.eth.wait_for_transaction_receipt(transaction_hash)
-
 

@@ -13,6 +13,8 @@ contract SoftwareSupplyChain {
         uint256 last_update;
         uint256 report_num;
         uint256 interaction_points;
+        uint256 reliability_bought;
+        uint256 last_reliability_buy;
         string[] groups;
         mapping(string => uint256) groups_map;
         string[] groups_adm;
@@ -54,9 +56,13 @@ contract SoftwareSupplyChain {
     uint256 public groups_num;
     uint256 public projects_num;
     uint256 public libraries_num;
-    uint256 public fees_paid;
+
+    uint256 public reliability_cost;
+    uint256 private fees_paid;
     uint256 private total_developers_reliability;
     uint256 private total_libraries_reliability;
+    uint256 private max_reliability;
+
     mapping(address => Developer) private developers;
     mapping(string => DeveloperGroup) private dev_groups;
     mapping(string => Project) private projects;
@@ -76,9 +82,11 @@ contract SoftwareSupplyChain {
 
     SupplyChainToken private sctContract;
 
-    constructor(address sctAddress) {
+    constructor(address sctAddress, uint256 max_rel, uint256 rel_cost) {
         sctContract = SupplyChainToken(sctAddress);
         contract_owner = msg.sender;
+        max_reliability = max_rel;
+        reliability_cost = rel_cost;
     }
 
     function addDeveloper(string memory _email) public {
@@ -92,8 +100,8 @@ contract SoftwareSupplyChain {
         );
         require(bytes(_email).length != 0, "Insert a valid email");
         require(
-            sctContract.balanceOf(msg.sender) >= 20,
-            "You need 30 SCT to register as a developer"
+            sctContract.balanceOf(msg.sender) >= 3000,
+            "You need 3000 SCT to register as a developer"
         );
         Developer storage dev = developers[msg.sender];
         dev.id = msg.sender;
@@ -103,8 +111,8 @@ contract SoftwareSupplyChain {
         dev.registration_date = block.timestamp;
         dev.last_update = block.timestamp;
         devs_num++;
-        sctContract.transferFrom(msg.sender, address(this), 30);
-        fees_paid += 30;
+        sctContract.transferFrom(msg.sender, address(this), 3000);
+        fees_paid += 3000;
     }
 
     function createGroup(string memory group_name) public {
@@ -118,8 +126,8 @@ contract SoftwareSupplyChain {
             "A group with the same name aready exists"
         );
         require(
-            sctContract.balanceOf(msg.sender) >= 20,
-            "You need 20 SCT to create a group"
+            sctContract.balanceOf(msg.sender) >= 2000,
+            "You need 2000 SCT to create a group"
         );
         DeveloperGroup storage dev_group = dev_groups[group_name];
         developers[msg.sender].groups.push(group_name);
@@ -130,8 +138,8 @@ contract SoftwareSupplyChain {
         dev_group.admin = msg.sender;
         dev_group.group_developers.push(msg.sender);
         groups_num++;
-        sctContract.transferFrom(msg.sender, address(this), 20);
-        fees_paid += 20;
+        sctContract.transferFrom(msg.sender, address(this), 2000);
+        fees_paid += 2000;
     }
 
     function createProject(
@@ -155,8 +163,8 @@ contract SoftwareSupplyChain {
             "A project with the same name already exists"
         );
         require(
-            sctContract.balanceOf(msg.sender) >= 20,
-            "You need 20 SCT to create a project"
+            sctContract.balanceOf(msg.sender) >= 2000,
+            "You need 2000 SCT to create a project"
         );
         Project storage project = projects[project_name];
         dev_groups[group_name].group_projects.push(project_name);
@@ -164,8 +172,8 @@ contract SoftwareSupplyChain {
         project.group = group_name;
         project.admin = msg.sender;
         projects_num++;
-        sctContract.transferFrom(msg.sender, address(this), 20);
-        fees_paid += 20;
+        sctContract.transferFrom(msg.sender, address(this), 2000);
+        fees_paid += 2000;
     }
 
     function requestGroupAccess(string memory group_name) public {
@@ -293,8 +301,8 @@ contract SoftwareSupplyChain {
             "The same version already exists"
         );
         require(
-            sctContract.balanceOf(msg.sender) >= 20,
-            "You need 10 SCT to add a library version to a project"
+            sctContract.balanceOf(msg.sender) >= 1000,
+            "You need 1000 SCT to add a library version to a project"
         );
         Library storage lib = libraries[CID];
         lib.CID = CID;
@@ -308,8 +316,8 @@ contract SoftwareSupplyChain {
         projects[project_name].library_versions.push(CID);
         projects[project_name].last_version = CID;
         projects[project_name].library_versions_map[version] = CID;
-        sctContract.transferFrom(msg.sender, address(this), 10);
-        fees_paid += 10;
+        sctContract.transferFrom(msg.sender, address(this), 1000);
+        fees_paid += 1000;
     }
 
     function voteDeveloper(address developer) public {
@@ -393,8 +401,36 @@ contract SoftwareSupplyChain {
         emit Bought(tokens);
     }
 
-    function balanceOf(address tokenOwner) public view returns (uint256) {
-        return sctContract.balanceOf(tokenOwner);
+    function buyReliability(uint256 reliability) public {
+        require(
+            developers[msg.sender].id == msg.sender,
+            "You must register as a developer before you buy reliability"
+        );
+        require(
+            balanceOf(msg.sender) >= reliability * reliability_cost,
+            "You don't have enough SCT"
+        );
+        Developer storage dev = developers[msg.sender];
+        if (block.timestamp - dev.last_reliability_buy >= 2592000) {
+            dev.reliability_bought = 0;
+        }
+        require(
+            dev.reliability_bought + reliability < max_reliability,
+            "You bought the maximum number of reliability, wait 30 days"
+        );
+        dev.last_reliability_buy = block.timestamp;
+        dev.reliability_bought += reliability;
+        dev.reliability += 10;
+        sctContract.transferFrom(
+            msg.sender,
+            address(this),
+            reliability * reliability_cost
+        );
+        fees_paid += reliability * reliability_cost;
+    }
+
+    function balanceOf(address token_owner) public view returns (uint256) {
+        return sctContract.balanceOf(token_owner);
     }
 
     function getDeveloperInformation(

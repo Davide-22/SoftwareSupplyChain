@@ -61,7 +61,8 @@ if __name__ == "__main__":
                 24 - Update your reliability
                 25 - Appoint another developer as admin
                 26 - Buy tokens
-                27 - Get the number of tokens of a developer
+                27 - Buy reliability
+                28 - Get the number of tokens of a developer
                 q - Exit\n"""
         )
         if cmd == "1":
@@ -198,6 +199,8 @@ if __name__ == "__main__":
         elif cmd == "26":
             transactions.buyTokens()
         elif cmd == "27":
+            transactions.buyReliability()
+        elif cmd == "28":
             addr = input("Insert the address of the developer: ")
             try:
                 balance = contract.functions.balanceOf(addr).call()
