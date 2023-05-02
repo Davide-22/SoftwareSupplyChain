@@ -418,7 +418,9 @@ contract SoftwareSupplyChain {
             dev.reliability_bought + reliability < max_reliability,
             "You bought the maximum number of reliability, wait 30 days"
         );
-        dev.last_reliability_buy = block.timestamp;
+        if (dev.reliability_bought == 0) {
+            dev.last_reliability_buy = block.timestamp;
+        }
         dev.reliability_bought += reliability;
         dev.reliability += 10;
         sctContract.transferFrom(

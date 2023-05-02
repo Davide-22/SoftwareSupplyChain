@@ -19,22 +19,22 @@ class Transactions:
         email: str = input("Insert your email: ")
         print("Registering as a developer...")
         try:
-            #TODO: before approving tokens, check if enough token are alredy approved
             self.approveTokenFee(3000)
             self.createTransaction(self.contract.functions.addDeveloper, email)
             print(f"Registered as a developer with email {email}\n")
         except exceptions.SolidityError as error:
+            self.approveTokenFee(0)
             print(str(error)[70:], end="\n")
 
     def createGroup(self):
         group_name: str = input("Insert the group name: ")
         print("Creating a group...")
         try:
-            #TODO: before approving tokens, check if enough token are alredy approved
             self.approveTokenFee(2000)
             self.createTransaction(self.contract.functions.createGroup, group_name)
             print(f"Group {group_name} created\n")
         except exceptions.SolidityError as error:
+            self.approveTokenFee(0)
             print(str(error)[70:], end="\n")
 
     def createProject(self):
@@ -44,13 +44,13 @@ class Transactions:
         project_name: str = input("Insert the project name: ")
         print("Creating a project...")
         try:
-            #TODO: before approving tokens, check if enough token are alredy approved
             self.approveTokenFee(2000)
             self.createTransaction(
                 self.contract.functions.createProject, group_name, project_name
             )
             print(f"Project {project_name} created\n")
         except exceptions.SolidityError as error:
+            self.approveTokenFee(0)
             print(str(error)[70:], end="\n")
 
     def requestGroupAccess(self):
@@ -94,7 +94,6 @@ class Transactions:
 
         CID: str = self.ipfs.uploadFile(file)["cid"]
         try:
-            #TODO: before approving tokens, check if enough token are alredy approved
             self.approveTokenFee(1000)
             self.createTransaction(
                 self.contract.functions.addLibrary,
@@ -105,6 +104,7 @@ class Transactions:
             )
             print(f"The library has been added\n")
         except exceptions.SolidityError as error:
+            self.approveTokenFee(0)
             print(str(error)[70:], end="\n")
 
     def voteDeveloper(self):
@@ -202,13 +202,13 @@ class Transactions:
         print("Buying reliability...")
         try:
             reliability_cost: int = int(self.contract.functions.reliability_cost().call())
-            #TODO: before approving tokens, check if enough token are alredy approved
             self.approveTokenFee(reliability*reliability_cost)
             receipt = self.createTransaction(
                 self.contract.functions.buyReliability, reliability
             )
             print(f"{reliability} reliability has been bought\n")
         except exceptions.SolidityError as error:
+            self.approveTokenFee(0)
             print(str(error)[70:], end="\n")
 
     def createTransaction(self, fun, *parameters, value=0):

@@ -26,19 +26,21 @@ class IPFS:
                 f.write(response.text)
         return response.status_code
 
-    def downloadFileWithAllDependencies(self, CID: str):
-        info = self.contract.functions.getLibraryInformation(CID).call()
-        dependencies = info[2]
-        status_code = self.downloadFile(CID=CID, name=info[1])
-        if status_code == 200:
-            print(
-                f"The library {info[1]} (version {info[0]}) has been successfully downloaded"
-            )
-            if dependencies[0] != "":
-                print(f"{info[1]} has the following dependencies: {dependencies}")
-        else:
-            print("Wrong CID")
-            return
-        for dep in dependencies:
-            if dep != "":
-                self.downloadFileWithAllDependencies(CID=dep)
+    def downloadFileWithAllDependencies(self, CID: str, downloaded :dict):
+        if(CID not in downloaded):
+            info = self.contract.functions.getLibraryInformation(CID).call()
+            dependencies = info[2]
+            status_code = self.downloadFile(CID=CID, name=info[1])
+            downloaded[CID] = True
+            if status_code == 200:
+                print(
+                    f"The library {info[1]} (version {info[0]}) has been successfully downloaded"
+                )
+                if dependencies[0] != "":
+                    print(f"{info[1]} has the following dependencies: {dependencies}")
+            else:
+                print("Wrong CID")
+                return
+            for dep in dependencies:
+                if dep != "":
+                    self.downloadFileWithAllDependencies(CID=dep, downloaded=downloaded)
