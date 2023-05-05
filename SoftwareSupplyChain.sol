@@ -48,6 +48,7 @@ contract SoftwareSupplyChain {
         string version;
         string project;
         uint256 reliability;
+        address[] developed_by;
         string[] dependencies;
     }
 
@@ -323,6 +324,14 @@ contract SoftwareSupplyChain {
         lib.version = version;
         lib.dependencies = dependencies;
         lib.project = project_name;
+
+        address[] memory devs = dev_groups[projects[project_name].group]
+            .group_developers;
+        uint256 len = devs.length;
+        for (uint256 i = 0; i < len; i++) {
+            lib.developed_by.push(developers[devs[i]].id);
+        }
+
         uint256 rel = computeReliability(CID);
         lib.reliability = rel;
         total_libraries_reliability += rel;
@@ -339,7 +348,7 @@ contract SoftwareSupplyChain {
             developers[msg.sender].id == msg.sender,
             "You must register as a developer before you vote another developer"
         );
-        require(msg.sender != developer, "You can't vote yourself");
+        require(msg.sender != developer, "You can't vote for yourself");
         require(
             developers[developer].id == developer,
             "Insert a valid developer address"
@@ -437,13 +446,13 @@ contract SoftwareSupplyChain {
         if (dev.reliability_bought == 0) {
             dev.last_reliability_buy = block.timestamp;
         }
-        dev.reliability_bought += reliability;
-        dev.reliability += 10;
         sctContract.transferFrom(
             msg.sender,
             address(this),
             reliability * reliability_cost
         );
+        dev.reliability_bought += reliability;
+        dev.reliability += reliability;
         UpdateFirstReleliabilityDev(dev);
         fees_paid += reliability * reliability_cost;
     }
@@ -576,14 +585,16 @@ contract SoftwareSupplyChain {
     function computeReliability(
         string memory CID
     ) private view returns (uint256) {
-        address[] memory devs = dev_groups[
-            projects[libraries[CID].project].group
-        ].group_developers;
+        address[] memory devs = libraries[CID].developed_by;
         uint256 len = devs.length;
         uint256 sum = 0;
         for (uint256 i = 0; i < len; i++) {
+            if (developers[devs[i]].reliability < 0) {
+                return 0;
+            }
             sum += developers[devs[i]].reliability;
         }
+
         return sum / len;
     }
 

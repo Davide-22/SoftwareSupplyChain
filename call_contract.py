@@ -86,7 +86,7 @@ if __name__ == "__main__":
             e = input("Insert the email of the developer: ")
             try:
                 a = contract.functions.getDeveloperAddressFromEmail(e).call()
-                print(f"The address of the developers is {a}")
+                print(f"The address of the developers is {a}\n")
             except:
                 print("Insert a valid email\n")
         elif cmd == "7":
@@ -139,7 +139,7 @@ if __name__ == "__main__":
             g = input("Insert the name of the group: ")
             try:
                 d = contract.functions.getToBeApproved(g).call()
-                print(f"The following developers asked to join the group {g}: {d}")
+                print(f"The following developers asked to join the group {g}: {d}\n")
             except:
                 print("Insert a valid group name\n")
         elif cmd == "15":
@@ -147,7 +147,7 @@ if __name__ == "__main__":
             try:
                 v = contract.functions.getProjectVersions(p).call()
                 print(
-                    f"The following versions of the library are present in the project {p}: {v}"
+                    f"The following versions of the library are present in the project {p}: {v}\n"
                 )
             except:
                 print("Insert a valid project name\n")
@@ -156,7 +156,7 @@ if __name__ == "__main__":
             try:
                 v = contract.functions.getProjectLastVersion(p).call()
                 print(
-                    f"The CID of the last version of the library of project {p} is {v}"
+                    f"The CID of the last version of the library of project {p} is {v}\n"
                 )
             except:
                 print("Insert a valid project name\n")
@@ -164,7 +164,7 @@ if __name__ == "__main__":
             CID = input("Insert the CID of the library: ")
             try:
                 info = contract.functions.getLibraryInformation(CID).call()
-                print(info)
+                print(f"{info[1]}\nVersion: {info[0]}\nReliability: {info[3]}\nDependencies: {info[2]}\n")
             except:
                 print("Insert a valid CID\n")
         elif cmd == "18":
@@ -172,7 +172,7 @@ if __name__ == "__main__":
             try:
                 ipfs.downloadFileWithAllDependencies(CID=CID)
             except Exception as e:
-                print(e)
+                print(e, end="\n\n")
         elif cmd == "19":
             transactions.requestGroupAccess()
         elif cmd == "20":

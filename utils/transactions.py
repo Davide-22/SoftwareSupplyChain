@@ -24,7 +24,7 @@ class Transactions:
             print(f"Registered as a developer with email {email}\n")
         except exceptions.SolidityError as error:
             self.approveTokenFee(0)
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
 
     def createGroup(self):
         group_name: str = input("Insert the group name: ")
@@ -35,7 +35,7 @@ class Transactions:
             print(f"Group {group_name} created\n")
         except exceptions.SolidityError as error:
             self.approveTokenFee(0)
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
 
     def createProject(self):
         group_name: str = input(
@@ -51,7 +51,7 @@ class Transactions:
             print(f"Project {project_name} created\n")
         except exceptions.SolidityError as error:
             self.approveTokenFee(0)
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
 
     def requestGroupAccess(self):
         group_name: str = input("Insert the name of the group that you want to join: ")
@@ -62,7 +62,7 @@ class Transactions:
             )
             print(f"The request to join the {group_name} group has been registered\n")
         except exceptions.SolidityError as error:
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
 
     def acceptGroupRequest(self):
         group_name: str = input("Insert the name of the group: ")
@@ -74,7 +74,7 @@ class Transactions:
             )
             print(f"{addr} has been accepted in the {group_name} group\n")
         except exceptions.SolidityError as error:
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
 
     def addLibrary(self):
         project_name: str = input("Insert the name of the project: ")
@@ -90,7 +90,7 @@ class Transactions:
             with open(path, "r") as f:
                 file = f.read()
         except FileNotFoundError:
-            print("Wrong path")
+            print("Wrong path\n")
 
         CID: str = self.ipfs.uploadFile(file)["cid"]
         try:
@@ -105,7 +105,7 @@ class Transactions:
             print(f"The library has been added\n")
         except exceptions.SolidityError as error:
             self.approveTokenFee(0)
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
 
     def voteDeveloper(self):
         developer: str = input("Insert the address of the developer: ")
@@ -117,7 +117,7 @@ class Transactions:
             )
             print(f"The developer has been voted\n")
         except exceptions.SolidityError as error:
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
 
     def reportDeveloper(self):
         developer: str = input("Insert the address of the developer: ")
@@ -129,7 +129,7 @@ class Transactions:
             )
             print(f"The developer has been reported\n")
         except exceptions.SolidityError as error:
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
 
     def updateReliability(self):
         print("Updating the reliability...")
@@ -137,7 +137,7 @@ class Transactions:
             self.createTransaction(self.contract.functions.updateReliability)
             print(f"The reliability has been updated\n")
         except exceptions.SolidityError as error:
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
 
     def changeAdmin(self):
         new_admin: str = input("Insert the address of the new admin: ")
@@ -149,7 +149,7 @@ class Transactions:
             )
             print(f"The admin has been changed\n")
         except exceptions.SolidityError as error:
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
 
     def getDependenciesInformation(self):
         name = input("Insert the name of the library: ")
@@ -195,7 +195,7 @@ class Transactions:
             )
             print(f"{tokens} tokens have been bought\n")
         except exceptions.SolidityError as error:
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
     
     def buyReliability(self):
         reliability: int = int(input("Insert the amount of reliability to buy: "))
@@ -209,7 +209,7 @@ class Transactions:
             print(f"{reliability} reliability has been bought\n")
         except exceptions.SolidityError as error:
             self.approveTokenFee(0)
-            print(str(error)[70:], end="\n")
+            print(str(error)[70:], end="\n\n")
 
     def createTransaction(self, fun, *parameters, value=0):
         nonce: int = self.w3.eth.getTransactionCount(self.addr)
