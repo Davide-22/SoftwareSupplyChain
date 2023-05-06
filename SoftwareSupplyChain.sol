@@ -29,6 +29,7 @@ contract SoftwareSupplyChain {
         string name;
         address admin;
         address[] group_developers;
+        mapping(address => uint256) group_developers_map;
         address[] to_be_approved;
         mapping(address => uint256) to_be_approved_map;
         string[] group_projects;
@@ -150,6 +151,9 @@ contract SoftwareSupplyChain {
         dev_group.name = group_name;
         dev_group.admin = msg.sender;
         dev_group.group_developers.push(msg.sender);
+        dev_group.group_developers_map[msg.sender] = dev_group
+            .group_developers
+            .length;
         groups_num++;
         sctContract.transferFrom(msg.sender, address(this), 2000);
         fees_paid += 2000;
@@ -223,14 +227,16 @@ contract SoftwareSupplyChain {
         );
         require(
             dev_groups[group_name].admin == msg.sender,
-            "You must be the admin of the group to accept request"
+            "You must be the admin of the group to accept requests"
         );
         require(
             dev_groups[group_name].to_be_approved_map[addr] != 0,
             "This developer has not requested to join the the group"
         );
         developers[addr].groups.push(group_name);
-        developers[addr].groups_map[group_name] = block.timestamp;
+        developers[addr].groups_map[group_name] = developers[addr]
+            .groups
+            .length;
         uint256 adminCoeff;
         for (
             uint256 i = 0;
@@ -273,6 +279,9 @@ contract SoftwareSupplyChain {
         }
         UpdateFirstReleliabilityDev(developers[msg.sender]);
         dev_groups[group_name].group_developers.push(addr);
+        dev_groups[group_name].group_developers_map[addr] = dev_groups[
+            group_name
+        ].group_developers.length;
         removeAddrFromArray(
             dev_groups[group_name].to_be_approved_map[addr] - 1,
             dev_groups[group_name].to_be_approved
@@ -281,7 +290,38 @@ contract SoftwareSupplyChain {
             developers[addr].group_access_requests_map[group_name] - 1,
             developers[addr].group_access_requests
         );
-        return;
+        dev_groups[group_name].to_be_approved_map[addr] = 0;
+        developers[addr].group_access_requests_map[group_name] = 0;
+    }
+
+    function removeDeveloperFromGroup(
+        string memory group_name,
+        address addr
+    ) public {
+        require(
+            bytes(dev_groups[group_name].name).length != 0,
+            "Insert a valid group name"
+        );
+        require(
+            developers[addr].groups_map[group_name] != 0,
+            "The developer is not part of the group"
+        );
+        require(
+            dev_groups[group_name].admin == msg.sender,
+            "You must be the admin of the group to remove a developer from it"
+        );
+
+        Developer storage dev = developers[addr];
+        removeStringFromArray(
+            developers[addr].groups_map[group_name] - 1,
+            developers[addr].groups
+        );
+        removeAddrFromArray(
+            dev_groups[group_name].group_developers_map[addr] - 1,
+            dev_groups[group_name].group_developers
+        );
+        dev.groups_map[group_name] = 0;
+        dev_groups[group_name].group_developers_map[addr] = 0;
     }
 
     function addLibrary(

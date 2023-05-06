@@ -55,14 +55,15 @@ if __name__ == "__main__":
                 18 - Download a library
                 19 - Request to join a group
                 20 - Accept the join request of a developer
-                21 - Vote a developer
-                22 - Report a developer
-                23 - Check the dependencies of a library and their reliability
-                24 - Update your reliability
-                25 - Appoint another developer as admin
-                26 - Buy tokens
-                27 - Buy reliability
-                28 - Get the number of tokens of a developer
+                21 - Remove a developer from a group
+                22 - Vote a developer
+                23 - Report a developer
+                24 - Check the dependencies of a library and their reliability
+                25 - Update your reliability
+                26 - Appoint another developer as admin
+                27 - Buy tokens
+                28 - Buy reliability
+                29 - Get the number of tokens of a developer
                 q - Exit\n"""
         )
         if cmd == "1":
@@ -117,7 +118,7 @@ if __name__ == "__main__":
         elif cmd == "11":
             a = input("Insert the address of the developer: ")
             try:
-                g = contract.functions.getGroups(a).call()
+                g = contract.functions.getAdminGroups(a).call()
                 print(f"{a} is admin of the following groups: {g}")
             except:
                 print("Insert a valid address\n")
@@ -176,31 +177,30 @@ if __name__ == "__main__":
         elif cmd == "19":
             transactions.requestGroupAccess()
         elif cmd == "20":
-            try:
-                transactions.acceptGroupRequest()
-            except:
-                print("Insert a valid address\n")
+            transactions.acceptGroupRequest()
         elif cmd == "21":
+            transactions.removeDeveloperFromGroup()
+        elif cmd == "22":
             try:
                 transactions.voteDeveloper()
             except:
                 print("Insert a valid address\n")
-        elif cmd == "22":
+        elif cmd == "23":
             try:
                 transactions.reportDeveloper()
             except:
                 print("Insert a valid address\n")
-        elif cmd == "23":
-            transactions.getDependenciesInformation()
         elif cmd == "24":
-            transactions.updateReliability()
+            transactions.getDependenciesInformation()
         elif cmd == "25":
-            transactions.changeAdmin()
+            transactions.updateReliability()
         elif cmd == "26":
-            transactions.buyTokens()
+            transactions.changeAdmin()
         elif cmd == "27":
-            transactions.buyReliability()
+            transactions.buyTokens()
         elif cmd == "28":
+            transactions.buyReliability()
+        elif cmd == "29":
             addr = input("Insert the address of the developer: ")
             try:
                 balance = contract.functions.balanceOf(addr).call()

@@ -75,6 +75,20 @@ class Transactions:
             print(f"{addr} has been accepted in the {group_name} group\n")
         except exceptions.SolidityError as error:
             print(str(error)[70:], end="\n\n")
+        except exceptions.InvalidAddress as error:
+            print("Insert a valid address")
+
+    def removeDeveloperFromGroup(self):
+        group_name: str = input("Insert the name of the group: ")
+        addr: str = input("Insert the address of the developer: ")
+        print(f"Removing {addr} from the group...")
+        try:
+            self.createTransaction(
+                self.contract.functions.removeDeveloperFromGroup, group_name, addr
+            )
+            print(f"{addr} has been removed from the {group_name} group\n")
+        except exceptions.SolidityError as error:
+            print(str(error)[70:], end="\n\n")
 
     def addLibrary(self):
         project_name: str = input("Insert the name of the project: ")
