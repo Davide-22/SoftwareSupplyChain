@@ -120,8 +120,7 @@ contract SoftwareSupplyChain {
         if (first_reliability_dev == address(0)) {
             first_reliability_dev = msg.sender;
         }
-        if (devs_num % 2 == 0) {
-            //TODO: check if the following operations work
+        if (devs_num % 100 == 0) {
             sctContract.transfer(first_reliability_dev, fees_paid);
             fees_paid = 0;
         }
