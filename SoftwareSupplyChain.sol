@@ -60,7 +60,7 @@ contract SoftwareSupplyChain {
     uint256 public libraries_num;
     uint256 public reliability_cost;
 
-    address private first_reliability_dev;
+    address private first_reliability_dev = address(0);
     uint256 private first_reliability_amount;
     uint256 private fees_paid;
     uint256 private total_developers_reliability;
@@ -117,14 +117,12 @@ contract SoftwareSupplyChain {
         devs_num++;
         sctContract.transferFrom(msg.sender, address(this), 3000);
         fees_paid += 3000;
-        if (devs_num % 100 == 0) {
+        if (first_reliability_dev == address(0)) {
+            first_reliability_dev = msg.sender;
+        }
+        if (devs_num % 2 == 0) {
             //TODO: check if the following operations work
-            sctContract.approve(first_reliability_dev, fees_paid);
-            sctContract.transferFrom(
-                address(this),
-                first_reliability_dev,
-                fees_paid
-            );
+            sctContract.transfer(first_reliability_dev, fees_paid);
             fees_paid = 0;
         }
     }
@@ -596,7 +594,7 @@ contract SoftwareSupplyChain {
         string memory level;
         uint256 reliability_mean = total_libraries_reliability / libraries_num;
         if (rel <= (reliability_mean * 1) / 3) {
-            level = "Very low";
+            level = "Very Low";
         } else if (rel <= (reliability_mean * 2) / 3) {
             level = "Low";
         } else if (rel <= (reliability_mean * 3) / 2) {

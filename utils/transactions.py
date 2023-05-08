@@ -167,6 +167,7 @@ class Transactions:
 
     def getDependenciesInformation(self):
         name = input("Insert the name of the library: ")
+        rel_levels = {"Very Low" : 0, "Low" : 0, "Medium" : 0, "High" : 0, "Very High": 0}
         try:
             CID = self.contract.functions.getProjectLastVersion(name).call()
 
@@ -178,6 +179,7 @@ class Transactions:
             print(
                 f"{info.project}\nLast version: {info.version}\nReliability: {info.reliability}\nReliability level: {info.level}"
             )
+            rel_levels[info.level] += 1
             dependencies = getDependencies(name)
             print(f"{name} dependencies:\n")
             for key in dependencies:
@@ -196,7 +198,13 @@ class Transactions:
                         print(
                             f"{info.project}\nLast version: {info.version}\nReliability: {info.reliability}\nReliability level: {info.level}\n"
                         )
+                        rel_levels[info.level] += 1
                         break
+            print(f"The are {rel_levels['Very Low']} libraries with reliability Very Low, \
+                  {rel_levels['Low']} libraries with reliability Low\
+                  {rel_levels['Medium']} libraries with reliability Medium\
+                  {rel_levels['High']} libraries with reliability High\
+                  {rel_levels['Very High']} libraries with reliability Very High")
         except:
             print("Insert a valid name")
 
