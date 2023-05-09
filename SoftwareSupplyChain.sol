@@ -111,7 +111,6 @@ contract SoftwareSupplyChain {
         dev.id = msg.sender;
         dev.email = _email;
         emails[_email] = msg.sender;
-        dev.reliability = 0;
         dev.registration_date = block.timestamp;
         dev.last_update = block.timestamp;
         devs_num++;
@@ -121,8 +120,7 @@ contract SoftwareSupplyChain {
             first_reliability_dev = msg.sender;
         }
         if (devs_num % 100 == 0) {
-            sctContract.transfer(first_reliability_dev, fees_paid);
-            fees_paid = 0;
+            addReliabilityAndTokens(first_reliability_dev, fees_paid / 100);
         }
     }
 
@@ -252,14 +250,18 @@ contract SoftwareSupplyChain {
                 developers[addr].reliability >=
                 (total_developers_reliability / devs_num) * 2
             ) {
-                developers[dev_groups[group_name].group_developers[i]]
-                    .reliability += 2 * adminCoeff;
+                addReliabilityAndTokens(
+                    developers[dev_groups[group_name].group_developers[i]].id,
+                    2 * adminCoeff
+                );
             } else if (
                 developers[addr].reliability >=
                 total_developers_reliability / devs_num
             ) {
-                developers[dev_groups[group_name].group_developers[i]]
-                    .reliability += 1 * adminCoeff;
+                addReliabilityAndTokens(
+                    developers[dev_groups[group_name].group_developers[i]].id,
+                    1 * adminCoeff
+                );
             }
             UpdateFirstReleliabilityDev(developers[addr]);
         }
@@ -267,12 +269,12 @@ contract SoftwareSupplyChain {
             developers[msg.sender].reliability >=
             (total_developers_reliability / devs_num) * 2
         ) {
-            developers[addr].reliability += 2;
+            addReliabilityAndTokens(addr, 2);
         } else if (
             developers[msg.sender].reliability >=
             total_developers_reliability / devs_num
         ) {
-            developers[addr].reliability += 1;
+            addReliabilityAndTokens(addr, 1);
         }
         UpdateFirstReleliabilityDev(developers[msg.sender]);
         dev_groups[group_name].group_developers.push(addr);
@@ -394,8 +396,7 @@ contract SoftwareSupplyChain {
             developers[msg.sender].voted[developer] == 0,
             "The developers was already voted"
         );
-        developers[developer].reliability += 10;
-        total_developers_reliability += 10;
+        addReliabilityAndTokens(developer, 10);
         developers[msg.sender].voted[developer] = block.timestamp;
         UpdateFirstReleliabilityDev(developers[developer]);
     }
@@ -427,7 +428,7 @@ contract SoftwareSupplyChain {
         );
         uint256 time = block.timestamp - developers[msg.sender].last_update;
         uint256 rel = time / 432000;
-        developers[msg.sender].reliability += rel;
+        addReliabilityAndTokens(msg.sender, rel);
         developers[msg.sender].last_update += rel * 432000;
         UpdateFirstReleliabilityDev(developers[msg.sender]);
     }
@@ -490,6 +491,7 @@ contract SoftwareSupplyChain {
         );
         dev.reliability_bought += reliability;
         dev.reliability += reliability;
+        total_developers_reliability += reliability;
         UpdateFirstReleliabilityDev(dev);
         fees_paid += reliability * reliability_cost;
     }
@@ -587,7 +589,7 @@ contract SoftwareSupplyChain {
             ];
             curr_dev.interaction_points++;
             if (curr_dev.interaction_points % 1000 == 0) {
-                curr_dev.reliability++;
+                addReliabilityAndTokens(curr_dev.id, 1);
             }
         }
         string memory level;
@@ -664,5 +666,14 @@ contract SoftwareSupplyChain {
             array[i] = array[i + 1];
         }
         array.pop();
+    }
+
+    function addReliabilityAndTokens(address dev, uint256 reliability) private {
+        developers[dev].reliability += reliability;
+        total_developers_reliability += reliability;
+        if (fees_paid >= reliability) {
+            sctContract.transfer(dev, reliability);
+            fees_paid -= reliability;
+        }
     }
 }
