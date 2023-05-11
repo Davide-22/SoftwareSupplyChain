@@ -83,6 +83,7 @@ contract SoftwareSupplyChain {
     );
 
     event Bought(uint256 amount);
+    event Sold(uint256 amount);
 
     SupplyChainToken private sctContract;
 
@@ -464,6 +465,15 @@ contract SoftwareSupplyChain {
         emit Bought(tokens);
     }
 
+    function sellTokens(uint256 amount) public {
+        require(amount > 0, "You need to sell at least some tokens");
+        uint256 allowance = sctContract.allowance(msg.sender, address(this));
+        require(allowance >= amount, "Check the token allowance");
+        sctContract.transferFrom(msg.sender, address(this), amount);
+        payable(msg.sender).transfer(amount);
+        emit Sold(amount);
+    }
+
     function buyReliability(uint256 reliability) public {
         require(
             developers[msg.sender].id == msg.sender,
@@ -631,7 +641,13 @@ contract SoftwareSupplyChain {
             if (developers[devs[i]].reliability < 0) {
                 return 0;
             }
-            sum += developers[devs[i]].reliability;
+            if (
+                developers[devs[i]].id == projects[libraries[CID].project].admin
+            ) {
+                sum += 2 * developers[devs[i]].reliability;
+            } else {
+                sum += developers[devs[i]].reliability;
+            }
         }
 
         return sum / len;
