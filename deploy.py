@@ -2,9 +2,26 @@ import json
 import os
 from solcx import install_solc, compile_source
 from web3 import Web3
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv, set_key
+from os.path import exists
 
+dotenv_file = find_dotenv()
 load_dotenv()
+
+
+if not exists(".env"):
+    private_key =  input("Insert the private key: ")
+    set_key(dotenv_file, "PRIVATE_KEY", private_key)
+
+    address = input("Insert the wallet address: ")
+    set_key(dotenv_file, "ADDRESS", address)
+
+    blockchain_address = input("Insert the blockchain address: ")
+    set_key(dotenv_file, "BLOCKCHAIN_ADDRESS", blockchain_address)
+
+    ipfs_token = input("Insert the IPFS auth token: ")
+    set_key(dotenv_file, "IPFS_AUTH_TOKEN", ipfs_token)
+    load_dotenv()
 
 with open("./ERC20/SupplyChainToken.sol", "r") as file:
     sol_file = file.read()
@@ -56,6 +73,7 @@ def deploy_contract(name: str, path: str, *params):
 """Deploy the SupplyChainToken contract"""
 token_abi, token_address = deploy_contract("SupplyChainToken", "/ERC20", initial_tokens)
 print(f"SupplyChainToken contract address: {token_address}")
+set_key(dotenv_file, "TOKEN_CONTRACT_ADDRESS", token_address)
 
 with open("token_abi.json", "w") as file:
     json.dump(token_abi, file)
@@ -63,6 +81,7 @@ with open("token_abi.json", "w") as file:
 """Deploy the SoftwareSupplyChain contract"""
 abi, address = deploy_contract("SoftwareSupplyChain", "", token_address, max_reliability, reliability_cost)
 print(f"SoftwareSupplyChain contract address: {address}")
+set_key(dotenv_file, "CONTRACT_ADDRESS", address)
 
 with open("abi.json", "w") as file:
     json.dump(abi, file)
