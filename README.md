@@ -24,13 +24,13 @@ Install the requirements:
 ```bash
 pip install -r requirements.txt
 ```
-Execute deploy.py
+Execute deploy.py:
 ```bash
 python deploy.py
 ```
 The script will ask for the wallett address and the private key. Both these information can be found in one of the wallet created on Ganache. Also, the blockchain address is on Ganache. Insted, the IPFS token can be created on https://web3.storage.
 
-Execute call_contract.py
+Execute call_contract.py:
 ```bash
 python call_contract.py
 ```
