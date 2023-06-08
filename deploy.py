@@ -5,11 +5,9 @@ from web3 import Web3
 from dotenv import load_dotenv, find_dotenv, set_key
 from os.path import exists
 
-dotenv_file = find_dotenv()
-load_dotenv()
-
-
 if not exists(".env"):
+    dotenv_file = ".env"
+    open(dotenv_file, "w")
     private_key =  input("Insert the private key: ")
     set_key(dotenv_file, "PRIVATE_KEY", private_key)
 
@@ -21,7 +19,10 @@ if not exists(".env"):
 
     ipfs_token = input("Insert the IPFS auth token: ")
     set_key(dotenv_file, "IPFS_AUTH_TOKEN", ipfs_token)
-    load_dotenv()
+else:
+    dotenv_file = find_dotenv()  
+    
+load_dotenv()
 
 with open("./ERC20/SupplyChainToken.sol", "r") as file:
     sol_file = file.read()
@@ -32,7 +33,7 @@ w3 = Web3(Web3.HTTPProvider(os.getenv("BLOCKCHAIN_ADDRESS")))
 chain_id = 1337
 addr = os.getenv("ADDRESS")
 private_key = os.getenv("PRIVATE_KEY")
-initial_tokens = 1000000000
+initial_tokens = 100000000000
 max_reliability = 20
 reliability_cost = 50
 

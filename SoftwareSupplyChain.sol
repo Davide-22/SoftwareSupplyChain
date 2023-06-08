@@ -60,8 +60,6 @@ contract SoftwareSupplyChain {
     uint256 public libraries_num;
     uint256 public reliability_cost;
 
-    address private first_reliability_dev = address(0);
-    uint256 private first_reliability_amount;
     uint256 private fees_paid;
     uint256 private total_developers_reliability;
     uint256 private total_libraries_reliability;
@@ -117,12 +115,6 @@ contract SoftwareSupplyChain {
         devs_num++;
         sctContract.transferFrom(msg.sender, address(this), 3000);
         fees_paid += 3000;
-        if (first_reliability_dev == address(0)) {
-            first_reliability_dev = msg.sender;
-        }
-        if (devs_num % 100 == 0) {
-            addReliabilityAndTokens(first_reliability_dev, fees_paid / 100);
-        }
     }
 
     function createGroup(string memory group_name) public {
@@ -264,7 +256,6 @@ contract SoftwareSupplyChain {
                     1 * adminCoeff
                 );
             }
-            UpdateFirstReleliabilityDev(developers[addr]);
         }
         if (
             developers[msg.sender].reliability >=
@@ -277,7 +268,6 @@ contract SoftwareSupplyChain {
         ) {
             addReliabilityAndTokens(addr, 1);
         }
-        UpdateFirstReleliabilityDev(developers[msg.sender]);
         dev_groups[group_name].group_developers.push(addr);
         dev_groups[group_name].group_developers_map[addr] = dev_groups[
             group_name
@@ -399,7 +389,6 @@ contract SoftwareSupplyChain {
         );
         addReliabilityAndTokens(developer, 10);
         developers[msg.sender].voted[developer] = block.timestamp;
-        UpdateFirstReleliabilityDev(developers[developer]);
     }
 
     function reportDeveloper(address developer) public {
@@ -431,7 +420,6 @@ contract SoftwareSupplyChain {
         uint256 rel = time / 432000;
         addReliabilityAndTokens(msg.sender, rel);
         developers[msg.sender].last_update += rel * 432000;
-        UpdateFirstReleliabilityDev(developers[msg.sender]);
     }
 
     function changeAdmin(address new_admin, string memory group_name) public {
@@ -502,7 +490,6 @@ contract SoftwareSupplyChain {
         dev.reliability_bought += reliability;
         dev.reliability += reliability;
         total_developers_reliability += reliability;
-        UpdateFirstReleliabilityDev(dev);
         fees_paid += reliability * reliability_cost;
     }
 
@@ -651,13 +638,6 @@ contract SoftwareSupplyChain {
         }
 
         return sum / len;
-    }
-
-    function UpdateFirstReleliabilityDev(Developer storage dev) private {
-        if (dev.reliability > first_reliability_amount) {
-            first_reliability_amount = dev.reliability;
-            first_reliability_dev = dev.id;
-        }
     }
 
     function removeStringFromArray(

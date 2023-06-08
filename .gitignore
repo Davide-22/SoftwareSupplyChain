@@ -1,5 +1,6 @@
 .env
 abi.json
 token_abi.json
+ganache.txt
 **/__pycache__/
 .vscode

@@ -5,7 +5,14 @@ from utils.check_dependencies import getDependencies
 
 class Transactions:
     def __init__(
-        self, w3: Web3, chain_id: int, addr: str, private_key: str, contract, token_contract, ipfs: IPFS 
+        self,
+        w3: Web3,
+        chain_id: int,
+        addr: str,
+        private_key: str,
+        contract,
+        token_contract,
+        ipfs: IPFS,
     ):
         self.w3 = w3
         self.chain_id = chain_id
@@ -166,8 +173,8 @@ class Transactions:
             print(str(error)[70:], end="\n\n")
 
     def getDependenciesInformation(self):
-        name = input("Insert the name of the library: ")
-        rel_levels = {"Very Low" : 0, "Low" : 0, "Medium" : 0, "High" : 0, "Very High": 0}
+        name: str = input("Insert the name of the library: ")
+        rel_levels = {"Very Low": 0, "Low": 0, "Medium": 0, "High": 0, "Very High": 0}
         try:
             CID = self.contract.functions.getProjectLastVersion(name).call()
 
@@ -200,11 +207,14 @@ class Transactions:
                         )
                         rel_levels[info.level] += 1
                         break
-            print(f"The are {rel_levels['Very Low']} libraries with reliability Very Low, \
-                  {rel_levels['Low']} libraries with reliability Low\
-                  {rel_levels['Medium']} libraries with reliability Medium\
-                  {rel_levels['High']} libraries with reliability High\
-                  {rel_levels['Very High']} libraries with reliability Very High")
+            print(
+                f"Among all the dependencies, for each reliability level, there are the following numbers of libraries:\n"
+                + f"Very Low: {rel_levels['Very Low']}\n"
+                + f"Low: {rel_levels['Low']}\n"
+                + f"Medium: {rel_levels['Medium']}\n"
+                + f"High: {rel_levels['High']}\n"
+                + f"Very High: {rel_levels['Very High']}"
+            )
         except:
             print("Insert a valid name")
 
@@ -218,13 +228,15 @@ class Transactions:
             print(f"{tokens} tokens have been bought\n")
         except exceptions.SolidityError as error:
             print(str(error)[70:], end="\n\n")
-    
+
     def buyReliability(self):
         reliability: int = int(input("Insert the amount of reliability to buy: "))
         print("Buying reliability...")
         try:
-            reliability_cost: int = int(self.contract.functions.reliability_cost().call())
-            self.approveTokenFee(reliability*reliability_cost)
+            reliability_cost: int = int(
+                self.contract.functions.reliability_cost().call()
+            )
+            self.approveTokenFee(reliability * reliability_cost)
             receipt = self.createTransaction(
                 self.contract.functions.buyReliability, reliability
             )
@@ -252,8 +264,8 @@ class Transactions:
         )
         tx_receipt = self.w3.eth.wait_for_transaction_receipt(transaction_hash)
         return tx_receipt
-    
-    def approveTokenFee(self, fee):
+
+    def approveTokenFee(self, fee: int):
         receipt = self.createTransaction(
-                self.token_contract.functions.approve, self.contract.address, fee
+            self.token_contract.functions.approve, self.contract.address, fee
         )
