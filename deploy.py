@@ -8,7 +8,7 @@ from os.path import exists
 if not exists(".env"):
     dotenv_file = ".env"
     open(dotenv_file, "w")
-    private_key =  input("Insert the private key: ")
+    private_key = input("Insert the private key: ")
     set_key(dotenv_file, "PRIVATE_KEY", private_key)
 
     address = input("Insert the wallet address: ")
@@ -17,11 +17,14 @@ if not exists(".env"):
     blockchain_address = input("Insert the blockchain address: ")
     set_key(dotenv_file, "BLOCKCHAIN_ADDRESS", blockchain_address)
 
+    chain_id = input("Insert the chain id: ")
+    set_key(dotenv_file, "CHAIN_ID", chain_id)
+
     ipfs_token = input("Insert the IPFS auth token: ")
     set_key(dotenv_file, "IPFS_AUTH_TOKEN", ipfs_token)
 else:
-    dotenv_file = find_dotenv()  
-    
+    dotenv_file = find_dotenv()
+
 load_dotenv()
 
 with open("./ERC20/SupplyChainToken.sol", "r") as file:
@@ -30,10 +33,10 @@ with open("./ERC20/SupplyChainToken.sol", "r") as file:
 install_solc("0.8.0")
 
 w3 = Web3(Web3.HTTPProvider(os.getenv("BLOCKCHAIN_ADDRESS")))
-chain_id = 1337
+chain_id = int(os.getenv("CHAIN_ID"))
 addr = os.getenv("ADDRESS")
 private_key = os.getenv("PRIVATE_KEY")
-initial_tokens = 100000000000
+initial_tokens = 10000000000
 max_reliability = 20
 reliability_cost = 50
 
@@ -80,7 +83,9 @@ with open("token_abi.json", "w") as file:
     json.dump(token_abi, file)
 
 """Deploy the SoftwareSupplyChain contract"""
-abi, address = deploy_contract("SoftwareSupplyChain", "", token_address, max_reliability, reliability_cost)
+abi, address = deploy_contract(
+    "SoftwareSupplyChain", "", token_address, max_reliability, reliability_cost
+)
 print(f"SoftwareSupplyChain contract address: {address}")
 set_key(dotenv_file, "CONTRACT_ADDRESS", address)
 
@@ -91,18 +96,10 @@ with open("abi.json", "w") as file:
 nonce: int = w3.eth.getTransactionCount(addr)
 contract = w3.eth.contract(address=token_address, abi=token_abi)
 transaction = contract.functions.transfer(address, initial_tokens).buildTransaction(
-    {
-        "chainId": chain_id,
-        "from": addr,
-        "gasPrice": w3.eth.gas_price,
-        "nonce": nonce
-    }
+    {"chainId": chain_id, "from": addr, "gasPrice": w3.eth.gas_price, "nonce": nonce}
 )
 signed_transaction = w3.eth.account.sign_transaction(
     transaction, private_key=private_key
 )
-transaction_hash = w3.eth.send_raw_transaction(
-    signed_transaction.rawTransaction
-)
+transaction_hash = w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
 tx_receipt = w3.eth.wait_for_transaction_receipt(transaction_hash)
-

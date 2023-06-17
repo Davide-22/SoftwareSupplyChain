@@ -5,7 +5,13 @@ if __name__ == "__main__":
     try:
         n_accounts = sys.argv[1]
         a = subprocess.run(
-            ["ganache", "--miner.blockTime=1", f"--wallet.totalAccounts={n_accounts}", ">", "ganache.txt"],
+            [
+                "ganache",
+                "--miner.blockTime=2",
+                f"--wallet.totalAccounts={n_accounts}",
+                ">",
+                "ganache.txt",
+            ],
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

@@ -585,9 +585,9 @@ contract SoftwareSupplyChain {
                     .group_developers[i]
             ];
             curr_dev.interaction_points++;
-            if (curr_dev.interaction_points % 1000 == 0) {
+            /*if (curr_dev.interaction_points % 1000 == 0) {
                 addReliabilityAndTokens(curr_dev.id, 1);
-            }
+            }*/
         }
         string memory level;
         uint256 reliability_mean = total_libraries_reliability / libraries_num;
