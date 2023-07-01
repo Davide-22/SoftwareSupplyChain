@@ -16,7 +16,7 @@ if __name__ == "__main__":
         token_abi = file.read()
 
     w3: Web3 = Web3(Web3.HTTPProvider(os.getenv("BLOCKCHAIN_ADDRESS")))
-    chain_id: int = 1337
+    chain_id: int = int(os.getenv("CHAIN_ID"))
     addr: str = os.getenv("ADDRESS")
     private_key: str = os.getenv("PRIVATE_KEY")
     contract = w3.eth.contract(address=os.getenv("CONTRACT_ADDRESS"), abi=abi)

@@ -31,6 +31,7 @@ execution_times = {}
 transactions_cost = {}
 failed_threads = []
 threads = []
+transaction_type = ""
 ipfs = IPFS(contract, ipfs_auth_token)
 
 public_keys = []
@@ -58,7 +59,21 @@ def parse_ganache_file(n: int = -1):
 
 
 def thread_function_groups(id: int, addr: str, private_key: str):
-    nonce: int = w3.eth.getTransactionCount(addr)
+    retry = 0
+    while True:
+        try:
+            nonce: int = w3.eth.getTransactionCount(addr)
+            break
+        except requests.exceptions.HTTPError as e:
+            if retry >= 20:
+                print("retry = 20")
+                return
+            sleep = (2 ** retry + 
+                 random.uniform(0, 2))
+            print(f"[{id}] HTTP retry in {fun}. Attempt number {retry + 1}")
+            time.sleep(sleep*0.1)
+            retry += 1
+    
     nonce = register_developer(id, addr, private_key, nonce)
 
     # Create groups test
@@ -66,7 +81,20 @@ def thread_function_groups(id: int, addr: str, private_key: str):
 
 
 def thread_function_projects(id: int, addr: str, private_key: str):
-    nonce: int = w3.eth.getTransactionCount(addr)
+    retry = 0
+    while True:
+        try:
+            nonce: int = w3.eth.getTransactionCount(addr)
+            break
+        except requests.exceptions.HTTPError as e:
+            if retry >= 20:
+                print("retry = 20")
+                return
+            sleep = (2 ** retry + 
+                 random.uniform(0, 2))
+            print(f"[{id}] HTTP retry in getTransactionCount. Attempt number {retry + 1}")
+            time.sleep(sleep*0.1)
+            retry += 1
     nonce = register_developer(id, addr, private_key, nonce)
 
     # Create projects test
@@ -75,7 +103,20 @@ def thread_function_projects(id: int, addr: str, private_key: str):
 
 
 def thread_function_dependencies(id: int, addr: str, private_key: str):
-    nonce: int = w3.eth.getTransactionCount(addr)
+    retry = 0
+    while True:
+        try:
+            nonce: int = w3.eth.getTransactionCount(addr)
+            break
+        except requests.exceptions.HTTPError as e:
+            if retry >= 20:
+                print("retry = 20")
+                return
+            sleep = (2 ** retry + 
+                 random.uniform(0, 2))
+            print(f"[{id}] HTTP retry in getTransactionCount. Attempt number {retry + 1}")
+            time.sleep(sleep*0.1)
+            retry += 1
     nonce = register_developer(id, addr, private_key, nonce)
 
     # Check dependencies reliability test
@@ -151,8 +192,9 @@ def create_groups(id: int, addr: str, private_key: str, nonce: int, n_groups: in
             )
 
         end_time = time.time()
-        execution_times[id] = end_time - start_time
-        print(f"Thread {id} time (group creation): {end_time - start_time}")
+        if transaction_type == "create_group":
+            execution_times[id] = end_time - start_time
+            print(f"Thread {id} time (group creation): {end_time - start_time}")
         return nonce
     except Exception as error:
         handle_error(id=id, error=error)
@@ -180,8 +222,9 @@ def create_projects(id: int, addr: str, private_key: str, nonce: int, n_projects
                 id=id,
             )
         end_time = time.time()
-        execution_times[id] = end_time - start_time
-        print(f"Thread {id} time (project creation): {end_time - start_time}")
+        if transaction_type == "create_project":
+            execution_times[id] = end_time - start_time
+            print(f"Thread {id} time (project creation): {end_time - start_time}")
         return nonce
     except Exception as error:
         handle_error(id=id, error=error)
@@ -221,7 +264,7 @@ def create_projects_with_names(
 
 def load_libraries(id: int, addr: str, private_key: str, nonce: int):
     try:
-        with open("print_hi.js", "r") as f:
+        with open("local/print_hi.js", "r") as f:
             file = f.read()
         print(f"Adding a version in the project print_hi...")
         CID1: str = ipfs.uploadFile(file)["cid"]
@@ -242,7 +285,7 @@ def load_libraries(id: int, addr: str, private_key: str, nonce: int):
             id=id,
         )
 
-        with open("print_hi_n_times.js", "r") as f:
+        with open("local/print_hi_n_times.js", "r") as f:
             file = f.read()
         print(f"Adding a version in the project print_hi_n_times...")
 
@@ -344,6 +387,7 @@ def createTransaction(
             break
         except requests.exceptions.HTTPError as e:
             if retry >= 20:
+                print("retry = 20")
                 return
             sleep = (2 ** retry + 
                  random.uniform(0, 2))
@@ -360,6 +404,8 @@ def createTransaction(
                     (receipt["gasUsed"], receipt["effectiveGasPrice"])
                 ]
                 return receipt
+            else:
+                return 
         except requests.exceptions.HTTPError as e:
             if retry >= 20:
                 return
@@ -410,8 +456,13 @@ def process_transactions_cost(transaction_type):
     print("Gas price mean: " + str(sum(gas_prices) / len(gas_prices)))
 
 
+def print_ex_time():
+    while True:
+        time.sleep(5)
+        print(execution_times)
+
 if __name__ == "__main__":
-    keys: dict = parse_ganache_file()
+    keys: dict = parse_ganache_file(50)
     i: int = 0
     cmd = input(
         "Select one of the following:"
@@ -440,7 +491,7 @@ if __name__ == "__main__":
 
     for t in threads:
         t.join()
-    print(f"{len(failed_threads)} threads have failed")
+    print(f"{len(failed_threads)} threads failed")
     print(len(execution_times.keys()))
     print(
         f"Execution time mean: {sum(execution_times.values())/len(execution_times.keys())}"
