@@ -1,5 +1,3 @@
-# SoftwareSupplyChain
-
 # Start the program
 ### Prerequisites
 1. python 3 https://www.python.org/downloads/
