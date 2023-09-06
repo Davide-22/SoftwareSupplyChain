@@ -20,19 +20,38 @@ with open("abi.json", "r") as file:
 with open("token_abi.json", "r") as file:
     token_abi = file.read()
 
-w3: Web3 = Web3(Web3.HTTPProvider(os.getenv("BLOCKCHAIN_ADDRESS")))
 chain_id: int = int(os.getenv("CHAIN_ID"))
-contract = w3.eth.contract(address=os.getenv("CONTRACT_ADDRESS"), abi=abi)
-token_contract = w3.eth.contract(
+
+w3_1: Web3 = Web3(Web3.HTTPProvider(os.getenv("BLOCKCHAIN_ADDRESS")))
+contract_1 = w3_1.eth.contract(address=os.getenv("CONTRACT_ADDRESS"), abi=abi)
+token_contract_1 = w3_1.eth.contract(
     address=os.getenv("TOKEN_CONTRACT_ADDRESS"), abi=token_abi
 )
+
+w3_2: Web3 = Web3(Web3.HTTPProvider(os.getenv("BLOCKCHAIN_ADDRESS_2")))
+contract_2 = w3_2.eth.contract(address=os.getenv("CONTRACT_ADDRESS"), abi=abi)
+token_contract_2 = w3_2.eth.contract(
+    address=os.getenv("TOKEN_CONTRACT_ADDRESS"), abi=token_abi
+) 
+
+w3_3: Web3 = Web3(Web3.HTTPProvider(os.getenv("BLOCKCHAIN_ADDRESS_3")))
+contract_3 = w3_3.eth.contract(address=os.getenv("CONTRACT_ADDRESS"), abi=abi)
+token_contract_3 = w3_3.eth.contract(
+    address=os.getenv("TOKEN_CONTRACT_ADDRESS"), abi=token_abi
+)
+
+"""
+w3 = w3_1
+contract_ = contract_1 
+token_contract_ = token_contract_1"""
+
 ipfs_auth_token: str = os.getenv("IPFS_AUTH_TOKEN")
 execution_times = {}
 transactions_cost = {}
 failed_threads = []
 threads = []
 transaction_type = ""
-ipfs = IPFS(contract, ipfs_auth_token)
+ipfs = IPFS(contract_1, ipfs_auth_token)
 
 public_keys = []
 private_keys = []
@@ -56,9 +75,9 @@ def parse_ganache_file(n: int = -1):
                     private_keys.append(tmp[1])
     keys = dict(zip(public_keys, private_keys))
     return keys
+    
 
-
-def thread_function_groups(id: int, addr: str, private_key: str):
+def thread_function_groups(id: int, addr: str, private_key: str, contract, token_contract, w3):
     retry = 0
     while True:
         try:
@@ -74,13 +93,13 @@ def thread_function_groups(id: int, addr: str, private_key: str):
             time.sleep(sleep*0.1)
             retry += 1
     
-    nonce = register_developer(id, addr, private_key, nonce)
+    nonce = register_developer(id, addr, private_key, nonce, contract, token_contract, w3)
 
     # Create groups test
-    create_groups(id, addr, private_key, nonce, 10)
+    create_groups(id, addr, private_key, nonce, 10, contract, token_contract, w3)
 
 
-def thread_function_projects(id: int, addr: str, private_key: str):
+def thread_function_projects(id: int, addr: str, private_key: str, contract, token_contract, w3):
     retry = 0
     while True:
         try:
@@ -95,14 +114,14 @@ def thread_function_projects(id: int, addr: str, private_key: str):
             print(f"[{id}] HTTP retry in getTransactionCount. Attempt number {retry + 1}")
             time.sleep(sleep*0.1)
             retry += 1
-    nonce = register_developer(id, addr, private_key, nonce)
+    nonce = register_developer(id, addr, private_key, nonce, contract, token_contract, w3)
 
     # Create projects test
-    nonce = create_groups(id, addr, private_key, nonce, 1)
-    nonce = create_projects(id, addr, private_key, nonce, 10)
+    nonce = create_groups(id, addr, private_key, nonce, 1, contract, token_contract, w3)
+    nonce = create_projects(id, addr, private_key, nonce, 10, contract, token_contract, w3)
 
 
-def thread_function_dependencies(id: int, addr: str, private_key: str):
+def thread_function_dependencies(id: int, addr: str, private_key: str, contract, token_contract, w3):
     retry = 0
     while True:
         try:
@@ -117,25 +136,25 @@ def thread_function_dependencies(id: int, addr: str, private_key: str):
             print(f"[{id}] HTTP retry in getTransactionCount. Attempt number {retry + 1}")
             time.sleep(sleep*0.1)
             retry += 1
-    nonce = register_developer(id, addr, private_key, nonce)
+    nonce = register_developer(id, addr, private_key, nonce, contract, token_contract, w3)
 
     # Check dependencies reliability test
     if id == 0:
-        nonce = create_groups(id, addr, private_key, nonce, 1)
+        nonce = create_groups(id, addr, private_key, nonce, 1, contract, token_contract, w3)
         nonce = create_projects_with_names(
-            id, addr, private_key, nonce, ["print_hi", "print_hi_n_times"]
+            id, addr, private_key, nonce, ["print_hi", "print_hi_n_times"], contract, token_contract, w3
         )
-        nonce = load_libraries(id, addr, private_key, nonce)
+        nonce = load_libraries(id, addr, private_key, nonce, contract, token_contract, w3)
     else:
         threads[0].join()
     start_time = time.time()
     for _ in range(10):
-        nonce = check_dependencies_reliability(id, addr, private_key, nonce)
+        nonce = check_dependencies_reliability(id, addr, private_key, nonce, contract, w3)
     end_time = time.time()
     execution_times[id] = end_time - start_time
 
 
-def register_developer(id: int, addr: str, private_key: str, nonce: int):
+def register_developer(id: int, addr: str, private_key: str, nonce: int, contract, token_contract, w3 ):
     try:
         n_tokens = 100000
         print(f"Buying {n_tokens} SCT by thread {id}...")
@@ -148,9 +167,19 @@ def register_developer(id: int, addr: str, private_key: str, nonce: int):
             private_key=private_key,
             key="buy_tokens",
             id=id,
+            w3=w3
         )
         nonce += 1
-        approveTokenFee(3000, nonce=nonce, addr=addr, private_key=private_key, id=id)
+        approveTokenFee(
+            3000, 
+            nonce=nonce, 
+            addr=addr, 
+            private_key=private_key, 
+            id=id, 
+            contract=contract,
+            token_contract=token_contract,
+            w3=w3
+        )
         email = f"test{id}@test.it"
         nonce += 1
         createTransaction(
@@ -162,6 +191,7 @@ def register_developer(id: int, addr: str, private_key: str, nonce: int):
             private_key=private_key,
             key="add_developer",
             id=id,
+            w3=w3
         )
 
         print(f"Registering a developer with email {email}")
@@ -170,14 +200,23 @@ def register_developer(id: int, addr: str, private_key: str, nonce: int):
         handle_error(id=id, error=error)
 
 
-def create_groups(id: int, addr: str, private_key: str, nonce: int, n_groups: int):
+def create_groups(
+        id: int, addr: str, private_key: str, nonce: int, n_groups: int, contract, token_contract, w3):
     try:
         start_time = time.time()
         print(f"Creating {n_groups} groups by thread {id}...")
+
         for i in range(n_groups):
             nonce += 1
             approveTokenFee(
-                2000, nonce=nonce, addr=addr, private_key=private_key, id=id
+                2000, 
+                nonce=nonce, 
+                addr=addr, 
+                private_key=private_key, 
+                id=id, 
+                contract=contract,
+                token_contract=token_contract,
+                w3=w3
             )
             nonce += 1
             createTransaction(
@@ -189,6 +228,7 @@ def create_groups(id: int, addr: str, private_key: str, nonce: int, n_groups: in
                 private_key=private_key,
                 key="create_group",
                 id=id,
+                w3=w3
             )
 
         end_time = time.time()
@@ -200,14 +240,22 @@ def create_groups(id: int, addr: str, private_key: str, nonce: int, n_groups: in
         handle_error(id=id, error=error)
 
 
-def create_projects(id: int, addr: str, private_key: str, nonce: int, n_projects: int):
+def create_projects(
+        id: int, addr: str, private_key: str, nonce: int, n_projects: int, contract, token_contract, w3):
     try:
         start_time = time.time()
         print(f"Creating {n_projects} projects by thread {id}...")
         for i in range(n_projects):
             nonce += 1
             approveTokenFee(
-                2000, nonce=nonce, addr=addr, private_key=private_key, id=id
+                2000, 
+                nonce=nonce, 
+                addr=addr, 
+                private_key=private_key, 
+                id=id, 
+                contract=contract,
+                token_contract=token_contract,
+                w3=w3
             )
             nonce += 1
             createTransaction(
@@ -220,6 +268,7 @@ def create_projects(id: int, addr: str, private_key: str, nonce: int, n_projects
                 private_key=private_key,
                 key="create_project",
                 id=id,
+                w3=w3
             )
         end_time = time.time()
         if transaction_type == "create_project":
@@ -231,7 +280,7 @@ def create_projects(id: int, addr: str, private_key: str, nonce: int, n_projects
 
 
 def create_projects_with_names(
-    id: int, addr: str, private_key: str, nonce: int, names: list
+    id: int, addr: str, private_key: str, nonce: int, names: list, contract, token_contract, w3
 ):
     try:
         start_time = time.time()
@@ -239,7 +288,14 @@ def create_projects_with_names(
         for i in names:
             nonce += 1
             approveTokenFee(
-                2000, nonce=nonce, addr=addr, private_key=private_key, id=id
+                2000, 
+                nonce=nonce, 
+                addr=addr, 
+                private_key=private_key, 
+                id=id, 
+                contract=contract,
+                token_contract=token_contract,
+                w3=w3
             )
             nonce += 1
             createTransaction(
@@ -252,6 +308,7 @@ def create_projects_with_names(
                 private_key=private_key,
                 key="create_project",
                 id=id,
+                w3=w3
             )
 
         end_time = time.time()
@@ -262,14 +319,23 @@ def create_projects_with_names(
         handle_error(id=id, error=error)
 
 
-def load_libraries(id: int, addr: str, private_key: str, nonce: int):
+def load_libraries(id: int, addr: str, private_key: str, nonce: int, contract, token_contract, w3):
     try:
         with open("local/print_hi.js", "r") as f:
             file = f.read()
         print(f"Adding a version in the project print_hi...")
         CID1: str = ipfs.uploadFile(file)["cid"]
         nonce += 1
-        approveTokenFee(1000, nonce=nonce, addr=addr, private_key=private_key, id=id)
+        approveTokenFee(
+            1000, 
+            nonce=nonce, 
+            addr=addr, 
+            private_key=private_key, 
+            id=id, 
+            contract=contract,
+            token_contract=token_contract,
+            w3=w3
+        )
         nonce += 1
         createTransaction(
             contract.functions.addLibrary,
@@ -283,6 +349,7 @@ def load_libraries(id: int, addr: str, private_key: str, nonce: int):
             private_key=private_key,
             key="add_library",
             id=id,
+            w3=w3
         )
 
         with open("local/print_hi_n_times.js", "r") as f:
@@ -291,7 +358,15 @@ def load_libraries(id: int, addr: str, private_key: str, nonce: int):
 
         CID2: str = ipfs.uploadFile(file)["cid"]
         nonce += 1
-        approveTokenFee(1000, nonce=nonce, addr=addr, private_key=private_key, id=id)
+        approveTokenFee(
+            1000, 
+            nonce=nonce, 
+            addr=addr, 
+            private_key=private_key, 
+            id=id, contract=contract, 
+            token_contract=token_contract,
+            w3=w3
+            )
         nonce += 1
         createTransaction(
             contract.functions.addLibrary,
@@ -305,13 +380,14 @@ def load_libraries(id: int, addr: str, private_key: str, nonce: int):
             private_key=private_key,
             key="add_library",
             id=id,
+            w3=w3
         )
         return nonce
     except Exception as error:
         handle_error(id=id, error=error)
 
 
-def check_dependencies_reliability(id: int, addr: str, private_key: str, nonce: int):
+def check_dependencies_reliability(id: int, addr: str, private_key: str, nonce: int, contract, w3):
     try:
         CID = contract.functions.getProjectLastVersion("print_hi_n_times").call()
         nonce += 1
@@ -324,6 +400,7 @@ def check_dependencies_reliability(id: int, addr: str, private_key: str, nonce: 
             private_key=private_key,
             key="get_library_information",
             id=id,
+            w3=w3
         )
 
         info = contract.events.LibraryInfo().processReceipt(receipt)[0]["args"]
@@ -346,6 +423,7 @@ def check_dependencies_reliability(id: int, addr: str, private_key: str, nonce: 
                     private_key=private_key,
                     key="get_library_information",
                     id=id,
+                    w3=w3
                 )
                 info = contract.events.LibraryInfo().processReceipt(receipt)[0]["args"]
                 print(
@@ -365,6 +443,7 @@ def createTransaction(
     private_key: str,
     key: str,
     id: int,
+    w3: Web3,
     wait: bool = False,
 ):  
     retry = 0
@@ -416,7 +495,7 @@ def createTransaction(
             retry += 1
 
 
-def approveTokenFee(fee: int, nonce: int, addr: str, private_key: str, id: int):
+def approveTokenFee(fee: int, nonce: int, addr: str, private_key: str, id: int, contract, token_contract, w3):
     createTransaction(
         token_contract.functions.approve,
         contract.address,
@@ -427,6 +506,7 @@ def approveTokenFee(fee: int, nonce: int, addr: str, private_key: str, id: int):
         wait=True,
         key="approve",
         id=id,
+        w3=w3
     )
 
 
@@ -455,11 +535,11 @@ def process_transactions_cost(transaction_type):
     print("Gas price max: " + str(max(gas_prices)))
     print("Gas price mean: " + str(sum(gas_prices) / len(gas_prices)))
 
-
+"""
 def print_ex_time():
     while True:
         time.sleep(5)
-        print(execution_times)
+        print(execution_times)"""
 
 if __name__ == "__main__":
     keys: dict = parse_ganache_file(50)
@@ -484,7 +564,19 @@ if __name__ == "__main__":
         quit()
 
     for addr in keys:
-        t = Thread(target=fun, args=(i, addr, keys[addr]))
+        if i % 3 == 0:
+            con = contract_1
+            tok_con = token_contract_1
+            w3_ = w3_1
+        elif i % 3 == 1:
+            con = contract_2
+            tok_con = token_contract_2
+            w3_ = w3_2
+        elif i % 3 == 2:
+            con = contract_3
+            tok_con = token_contract_3
+            w3_ = w3_3
+        t = Thread(target=fun, args=(i, addr, keys[addr], con, tok_con, w3_))
         i += 1
         threads.append(t)
         t.start()
